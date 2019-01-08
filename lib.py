@@ -10,6 +10,7 @@ import hashlib
 import base58
 import base64
 import json
+import os
 from Crypto.Cipher import AES
 from binascii import b2a_hex, a2b_hex
 from Crypto import Random
@@ -175,3 +176,8 @@ def handle_data_to_be_sent( data_json, receiver_public_key, sender_private_key, 
 
 	return data_json;
 
+def get_user_public( user_ID ):
+	f = open('users/'+user_ID['address']+'/public.key');
+	public_string = f.read();
+	f.close();
+	return public_string;
