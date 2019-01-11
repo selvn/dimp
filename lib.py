@@ -21,6 +21,8 @@ from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import MD5
 from Crypto.Hash import SHA256
 
+root_path = '/data/dimp/'
+
 class meta:
 	version = b'\x01';
 	def __init__(self, seed, fingerprint, key_data, key_algorithm = "RSA"):
@@ -181,3 +183,15 @@ def get_user_public( user_ID ):
 	public_string = f.read();
 	f.close();
 	return public_string;
+
+def get_keys_from_dict( dict, value ): #{'pid':'address'}
+	return [pid for pid, address in dict.items() if address == value]
+
+def store_message( address, message ):
+	receiver_directory = 'users/' + address + '/messages';
+	if not os.path.exists(receiver_directory):
+		os.makedirs(receiver_directory);
+	file_name = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+	with open(receiver_directory+"/" + file_name,"w") as f:
+		f.write( message + '\n' );
+	return True;
