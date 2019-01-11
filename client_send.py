@@ -154,7 +154,8 @@ if __name__ == '__main__':
 	if(len(data)>0):
 		tmp_array = data.split(':')
 		HOST = tmp_array[0]
-		PORT = tmp_array[1]
+		PORT = int(tmp_array[1])
+		print(PORT)
 	ADDR =(HOST,PORT) 
 	sock.connect(ADDR)
 	print('have connected with server');
