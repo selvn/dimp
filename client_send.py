@@ -151,7 +151,7 @@ if __name__ == '__main__':
 	PORT = 8998
 	print('please input server address(defualt:127.0.0.1:8998), enter for default: ')
 	data = input('input# ')
-	if(len(data)>0)
+	if(len(data)>0):
 		tmp_array = data.split(':')
 		HOST = tmp_array[0]
 		PORT = tmp_array[1]
