@@ -130,7 +130,7 @@ class Handler(BaseRequestHandler):
 			user_public = data_json['meta']['key'];
 		else:
 			user_public = get_user_public( sender_ID );
-		verify_result = verify(data_json['data'], sender_signature, user_public );
+		verify_result = verify(data_json['data'].encode('utf-8'), sender_signature, user_public );
 		if( verify_result == False ):
 			print( 'verify failed!');
 			return False;
@@ -161,8 +161,12 @@ class Handler(BaseRequestHandler):
 				if( receiver_ID['address'] == station_address ):
 					# 如果是发给服务器的消息, 应该是握手
 					encrypted_key = data_json['key'];
-					pw = bytes.decode(decrypt(station_private_key, encrypted_key));
-					content = json.loads(decrypt_message(pw, data_json['data']));
+					pw_byte = decrypt(station_private_key, encrypted_key);
+					print(pw_byte)
+					print('===')
+					print(pw_byte)
+					
+					content = json.loads(decrypt_message(pw_byte, data_json['data']).decode('utf-8'));
 					response = {};
 					if( 'command' in content and content['command'] == 'handshake' ):
 						if 'session' in content:
@@ -222,6 +226,12 @@ def scan_messages(arg):
 		sleep(1)
 
 if __name__ == '__main__':
+	print(chr(0).encode("utf-8"))
+	pw = random_string(16)
+	encrypted_message = encrypt_message(pw.encode('utf-8'), b'Hello world!!!!!')
+	print(encrypted_message)
+	o_message = decrypt_message(pw.encode('utf-8'), encrypted_message)
+	print(o_message)
 	# 发起一个线程, 扫描信息
 	thread = Thread(target = scan_messages, args = (10, ))
 	thread.start()
@@ -234,13 +244,13 @@ if __name__ == '__main__':
 	with open('private.pem','r') as f:
 		station_private_key = f.read();
 	
-	station_fingerprint = rsa_sign(station_name, station_private_key, '111111');
+	station_fingerprint = rsa_sign(station_name.encode('utf-8'), station_private_key, '111111');
 	station_address = btc_build_address( station_fingerprint );
 	# text = decrypt(station_private_key, encrypted_key);
 	# print(text);
 	with open('resources/moki_public_key.pem','r') as f:
 		moki_pub = f.read();
-	HOST = '127.0.0.1'
+	HOST = '0.0.0.0'
 	PORT = 8998;
 	ADDR = (HOST,PORT);
 	socketserver.TCPServer.allow_reuse_address = True;

@@ -75,8 +75,8 @@ hulk_connected = False;
 
 def handler_single_message( message_json ):
 	sender_id = get_ID_from_string(message_json['sender']);
-	received_data_pw = bytes.decode(decrypt(users[userd_user]['private'], message_json['key']));
-	content = json.loads(decrypt_message(received_data_pw, message_json['data']));
+	received_data_pw = decrypt(users[userd_user]['private'], message_json['key']);
+	content = json.loads(decrypt_message(received_data_pw, message_json['data']).decode('utf-8'));
 	if( 'command' in content and content['command'] == 'handshake'):
 		if( content['message'] == 'DIM?' ):
 			station_random_string = content['session'];

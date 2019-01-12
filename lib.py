@@ -85,14 +85,14 @@ def rsa_sign( data, private_key, key_passphrase = '' ):
 	else:
 		pri_key = RSA.importKey(private_key, key_passphrase);
 	signer = PKCS1_v1_5.new(pri_key)
-	hash_obj = SHA256.new(data.encode('utf-8'));
+	hash_obj = SHA256.new(data);
 	signature = signer.sign(hash_obj)
 	return (base64.b64encode(signature)).decode();
 
 #RSA 验签
 def verify(data, sign, pub_key):
 	# """校验RSA 数字签名"""
-	hash_value = SHA256.new(data.encode('utf-8'));
+	hash_value = SHA256.new(data);
 	verifier = PKCS1_v1_5.new(RSA.importKey(pub_key));
 	return verifier.verify(hash_value, base64.b64decode(sign));
 
@@ -115,7 +115,7 @@ def is_match(ID, meta):
 	# 1. 首先检查 Meta 信息中的 seed、key、fingerprint 与 ID.name 是否对应
 	if( meta['seed'] != ID['name'] ):
 		return False;
-	if( verify(meta['seed'], meta['fingerprint'], meta['key']) == False):
+	if( verify(meta['seed'].encode('utf-8'), meta['fingerprint'], meta['key']) == False):
 		return False;
 
 	# 2. 再由 Meta 算法生成其对应的地址，检查是否与 ID.address 相同
@@ -145,22 +145,22 @@ def get_ID( name, address, meta1 ):
 		return;
 	print('Address passed!');
 	return ID(name, address, meta1);
-
-def encrypt_message(pw, json_message ):
+# pw: b'', message: byte
+def encrypt_message(pw, message ):
 	# pw = base64.b64decode(key['data']);
-	cryptor = AES.new(pw.encode("utf-8"), AES.MODE_CBC, b'0000000000000000');
-	pad_string = json_message + (16 - len(json_message) % 16) * chr(0) 
-	ciphertext = cryptor.encrypt(pad_string.encode("utf-8"));
-	# 这里统一把加密后的字符串转化为16进制字符串
-	# 在下节介绍base64时解释原因
-	return bytes.decode(b2a_hex(ciphertext));
+	cryptor = AES.new(pw, AES.MODE_CBC, b'0000000000000000');
+	pad_string = message + (16 - len(message) % 16) * b'\x00' 
+	ciphertext = cryptor.encrypt(pad_string);
+	return base64.b64encode(ciphertext);
 
+# pw: b'', message: base64
+# return bytes
 def decrypt_message(pw, encrypted_message ):
-	ciphertext = a2b_hex(encrypted_message);
-	cryptor = AES.new(pw.encode("utf-8"), AES.MODE_CBC, b'0000000000000000');
+	ciphertext = base64.b64decode(encrypted_message);
+	cryptor = AES.new(pw, AES.MODE_CBC, b'0000000000000000');
 	plaintext = cryptor.decrypt(ciphertext)
 	# 解密后，去掉补足的空格用strip() 去掉
-	return bytes.decode(plaintext).rstrip(chr(0));
+	return plaintext.rstrip(b'\x00');
 
 def random_string( length ):
 	return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range( length ));
@@ -168,8 +168,8 @@ def random_string( length ):
 def handle_data_to_be_sent( data_json, receiver_public_key, sender_private_key, sender_private_key_passphrase ):
 	pw = random_string(16);
 	content_string = json.dumps( data_json.pop( 'content', None ) );
-	encrypted_data = encrypt_message(pw, content_string);
-	data_json['data'] = encrypted_data;
+	encrypted_data = encrypt_message(pw.encode('utf-8'), content_string.encode('utf-8'));
+	data_json['data'] = encrypted_data.decode('utf-8');
 	key = encrypt( receiver_public_key, pw );
 	data_json['key'] = key;
 
